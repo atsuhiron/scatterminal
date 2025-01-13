@@ -1,2 +1,2 @@
 # scatterminal
-Drow scatter plot on terminal
+Draw scatter plot on terminal
