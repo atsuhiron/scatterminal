@@ -30,10 +30,14 @@ class DataScaleType(str, Enum):
 class DataAxis:
     scale: DataScaleType = DataScaleType.linear
     name: str | None = None
+    min_: int | float | None = None
+    max_: int | float | None = None
 
     def __post_init__(self):
         if (self.name is not None) and (not self.name.isascii()):
             raise ValueError("Axis name must be ascii")
+        if (self.min_ is None) != (self.max_ is None):
+            raise ValueError("Axis min and Axis max should be defined simultaneously")
 
 
 @dataclasses.dataclass(frozen=True)
