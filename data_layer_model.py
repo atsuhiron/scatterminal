@@ -80,7 +80,7 @@ class Data(CanvasConvertible):
             x_max = max(max(datum.x) for datum in self.data)
         else:
             x_max = self.x_axis.max_
-        if self.x_axis.scale == DataScaleType.linear:
+        if self.x_axis.scale == DataScaleType.log:
             x_min = math.log10(x_min)
             x_max = math.log10(x_max)
 
@@ -92,7 +92,7 @@ class Data(CanvasConvertible):
             y_max = max(max(datum.y) for datum in self.data)
         else:
             y_max = self.y_axis.max_
-        if self.y_axis.scale == DataScaleType.linear:
+        if self.y_axis.scale == DataScaleType.log:
             y_min = log(y_min)
             y_max = log(y_max)
 

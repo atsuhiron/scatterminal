@@ -75,14 +75,23 @@ def _parse(str_cells: list[list[str]], next_id: int) -> list[DataSequence]:
     parsed_cells = [[_parse_cell(line[i]) for line in str_cells] for i in range(len(str_cells[0]))]
 
     _ = (_check_col_type(col) for col in parsed_cells)
-    col_num = len(parsed_cells[0])
+    col_num = len(parsed_cells)
 
     has_header = any(_has_header(col) for col in parsed_cells)
     header_line = str_cells[0] if has_header else [None] * col_num
+    content_slice = slice(int(has_header), None)
 
     if col_num == 1:
-        return [DataSequence(list(range(len(parsed_cells[0]))), parsed_cells[0], next_id, header_line[0])]
-    return [DataSequence(parsed_cells[0], parsed_cells[i], next_id + i - 1, header_line[i]) for i in range(1, col_num)]
+        content = parsed_cells[0][content_slice]
+        return [DataSequence(list(range(len(content))), content, next_id, header_line[0])]
+    return [
+        DataSequence(
+            parsed_cells[0][content_slice],
+            parsed_cells[i][content_slice],
+            next_id + i - 1,
+            header_line[i]
+        ) for i in range(1, col_num)
+    ]
 
 
 def plot_csv(
@@ -110,3 +119,7 @@ def plot_csv(
     canvas = data.to_canvas(Canvas)
     terminal = canvas.to_terminal(Terminal)
     terminal.plot()
+
+
+if __name__ == "__main__":
+    plot_csv(["samples/sample_double_column.csv"])
