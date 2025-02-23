@@ -1,5 +1,15 @@
+from typing import Type
+import abc
 import dataclasses
 from enum import Enum
+
+from terminal_layer_model import Plottable
+
+
+class TerminalConvertible(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def to_terminal(self, plot_type: Type[Plottable]) -> Plottable:
+        pass
 
 
 @dataclasses.dataclass(frozen=True)
@@ -10,7 +20,7 @@ class CanvasPoint:
 
 @dataclasses.dataclass(frozen=True)
 class CanvasMarker(CanvasPoint):
-    marker_id: int
+    marker_group_id: int
 
 
 class CanvasScaleType(str, Enum):
@@ -28,7 +38,7 @@ class CanvasAxis:
 
 @dataclasses.dataclass(frozen=True)
 class CanvasLegendElement:
-    marker_id: int
+    marker_group_id: int
     sequence_name: str | None
 
 
@@ -38,8 +48,11 @@ class CanvasLegend:
 
 
 @dataclasses.dataclass(frozen=True)
-class Canvas:
+class Canvas(TerminalConvertible):
     markers: list[CanvasMarker]
     x_axis: CanvasAxis
     y_axis: CanvasAxis
     legend: CanvasLegend
+
+    def to_terminal(self, plot_type: Type[Plottable]) -> Plottable:
+        pass
