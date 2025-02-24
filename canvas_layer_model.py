@@ -110,9 +110,16 @@ class Canvas(TerminalConvertible):
             actual_max_order = max_order
             actual_min_order = max_order - min_max_digit
 
-        print(actual_min_order, actual_max_order)
+        # print(actual_min_order, actual_max_order)
+        print(canvas_axis.max_ - canvas_axis.min_)
 
 
 if __name__ == "__main__":
-    ca = CanvasAxis(0.12, 13.4, CanvasScaleType.linear)
-    Canvas.calc_y_tick(ca)
+    for min_, max_, scale in [
+        (0.12, 13.4, "linear"),
+        (-13.1, 25.3, "linear"),
+        (-13.1, -0.3, "linear"),
+        (0.12, 1003.7, "log"),
+    ]:
+        ca = CanvasAxis(min_, max_, CanvasScaleType(scale))
+        Canvas.calc_y_tick(ca)
