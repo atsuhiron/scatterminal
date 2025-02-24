@@ -41,17 +41,10 @@ class TerminalLabel(TerminalPoint):
 
 
 @dataclasses.dataclass(frozen=True)
-class TerminalXAxis:
+class TerminalAxis:
     axis_line: list[TerminalMarker]
     tick_labels: list[TerminalLabel]
     axis_label: TerminalLabel | None = None
-
-
-@dataclasses.dataclass(frozen=True)
-class TerminalYAxis:
-    axis_line = list[TerminalMarker]
-    tick_labels: list[TerminalLabel]
-    axis_label: list[TerminalMarker] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -62,8 +55,8 @@ class TerminalLegend:
 @dataclasses.dataclass(frozen=True)
 class Terminal(Plottable):
     plot_markers: list[TerminalMarker]
-    x_axis: TerminalXAxis
-    y_axis: TerminalYAxis
+    x_axis: TerminalAxis
+    y_axis: TerminalAxis
     legend: TerminalLegend
 
     def plot(self) -> None:
