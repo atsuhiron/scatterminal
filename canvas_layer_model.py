@@ -84,7 +84,8 @@ class Canvas(TerminalConvertible):
             ticks = Canvas._calc_linear_tick(canvas_axis.min_, canvas_axis.max_)
         else:
             ticks = Canvas._calc_log_tick(canvas_axis.min_, canvas_axis.max_)
-
+        sd = Canvas._calc_significant_digits(canvas_axis.min_, canvas_axis.max_)
+        use_index = Canvas._use_index(canvas_axis.scale, canvas_axis.min_, canvas_axis.max_)
 
     @staticmethod
     def _calc_linear_tick(min_: float, max_: float) -> list[float]:
@@ -118,14 +119,30 @@ class Canvas(TerminalConvertible):
         min_tick = round(log(min_) / tick_scale) * tick_scale
         return [exp(min_tick + (i * tick_scale)) for i in range(tick_num)]
 
+    @staticmethod
+    def _calc_significant_digits(min_: float, max_: float) -> int:
+        return int(math.ceil(log(max_ - min_)))
+
+    @staticmethod
+    def _use_index(scale: CanvasScaleType, min_: float, max_: float) -> bool:
+        far_from_origin = abs(min_) if abs(min_) > abs(max_) else abs(max_)
+        nea_from_origin = abs(min_) if abs(min_) < abs(max_) else abs(max_)
+
+        if scale == CanvasScaleType.linear:
+            median_order = log((far_from_origin + nea_from_origin) / 2)
+        else:
+            median_order = log(math.sqrt(far_from_origin * nea_from_origin))
+
+        return median_order > 4 or median_order < -4
+
 
 if __name__ == "__main__":
-    for min_, max_, scale in [
+    for _min, _max, _scale in [
         (0.12, 13.4, "linear"),
         (-13.1, 25.3, "linear"),
         (-13.1, -0.3, "linear"),
         (140.001, 140.029, "linear"),
         (0.12, 1003.7, "log"),
     ]:
-        ca = CanvasAxis(min_, max_, CanvasScaleType(scale))
+        ca = CanvasAxis(_min, _max, CanvasScaleType(_scale))
         Canvas.calc_y_tick(ca)
