@@ -81,12 +81,14 @@ class Canvas(TerminalConvertible):
     @staticmethod
     def calc_y_tick(canvas_axis: CanvasAxis) -> list[terminal.TerminalLabel]:
         if canvas_axis.scale == CanvasScaleType.linear:
-            detail_hierarchy = [[1., 10.], [5.], [2.5, 7.5]]
+            ticks = Canvas._calc_linear_tick(canvas_axis.min_, canvas_axis.max_)
         else:
-            detail_hierarchy = [[1., 10.], [3.], [2., 6.]]
-        detail_log_hierarchy = [(prior, [log(v) for v in h]) for (prior, h) in enumerate(detail_hierarchy)]
+            ticks = Canvas._calc_log_tick(canvas_axis.min_, canvas_axis.max_)
 
-        value_range = canvas_axis.max_ - canvas_axis.min_
+
+    @staticmethod
+    def _calc_linear_tick(min_: float, max_: float) -> list[float]:
+        value_range = max_ - min_
         tick_scale = exp(round(log(value_range) - 1))
         tick_num = value_range / tick_scale
         if tick_num > 20:
@@ -97,8 +99,24 @@ class Canvas(TerminalConvertible):
             tick_num /= 2.5
         tick_num = int(math.ceil(tick_num))
 
-        min_tick = round(canvas_axis.min_ / tick_scale) * tick_scale
-        ticks = [min_tick + (i * tick_scale) for i in range(tick_num)]
+        min_tick = round(min_ / tick_scale) * tick_scale
+        return [min_tick + (i * tick_scale) for i in range(tick_num)]
+
+    @staticmethod
+    def _calc_log_tick(min_: float, max_: float) -> list[float]:
+        value_range = log(max_) - log(min_)
+        tick_scale = exp(round(log(value_range) - 2))
+        tick_num = value_range / tick_scale
+        if tick_num > 20:
+            tick_scale *= 5
+            tick_num /= 5
+        elif tick_num > 10:
+            tick_scale *= 2.5
+            tick_num /= 2.5
+        tick_num = int(math.ceil(tick_num))
+
+        min_tick = round(log(min_) / tick_scale) * tick_scale
+        return [exp(min_tick + (i * tick_scale)) for i in range(tick_num)]
 
 
 if __name__ == "__main__":
