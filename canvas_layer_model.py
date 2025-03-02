@@ -86,32 +86,19 @@ class Canvas(TerminalConvertible):
             detail_hierarchy = [[1., 10.], [3.], [2., 6.]]
         detail_log_hierarchy = [(prior, [log(v) for v in h]) for (prior, h) in enumerate(detail_hierarchy)]
 
-        if canvas_axis.min_ > 0:
-            min_sign = 1.0
-            min_order = log(canvas_axis.min_)
-        else:
-            min_sign = -1.0
-            min_order = log(math.fabs(canvas_axis.min_))
+        value_range = canvas_axis.max_ - canvas_axis.min_
+        tick_scale = exp(round(log(value_range) - 1))
+        tick_num = value_range / tick_scale
+        if tick_num > 20:
+            tick_scale *= 5
+            tick_num /= 5
+        elif tick_num > 10:
+            tick_scale *= 2.5
+            tick_num /= 2.5
+        tick_num = int(math.ceil(tick_num))
 
-        if canvas_axis.max_ > 0:
-            max_sign = 1.0
-            max_order = log(canvas_axis.max_)
-        else:
-            max_sign = -1.0
-            max_order = log(math.fabs(canvas_axis.max_))
-
-        min_max_digit = log(canvas_axis.max_ - canvas_axis.min_)
-        if min_order > max_order:
-            # min is large negative number
-            actual_max_order = min_order + min_max_digit
-            actual_min_order = min_order
-        else:
-            # max is large positive number
-            actual_max_order = max_order
-            actual_min_order = max_order - min_max_digit
-
-        # print(actual_min_order, actual_max_order)
-        print(canvas_axis.max_ - canvas_axis.min_)
+        min_tick = round(canvas_axis.min_ / tick_scale) * tick_scale
+        ticks = [min_tick + (i * tick_scale) for i in range(tick_num)]
 
 
 if __name__ == "__main__":
@@ -119,6 +106,7 @@ if __name__ == "__main__":
         (0.12, 13.4, "linear"),
         (-13.1, 25.3, "linear"),
         (-13.1, -0.3, "linear"),
+        (140.001, 140.029, "linear"),
         (0.12, 1003.7, "log"),
     ]:
         ca = CanvasAxis(min_, max_, CanvasScaleType(scale))
