@@ -4,7 +4,7 @@ import dataclasses
 from enum import Enum
 import warnings
 
-from common import log
+from common import log, abs_to_rel
 import canvas_layer_model as canvas
 
 
@@ -126,8 +126,8 @@ class Data(CanvasConvertible):
             for x, y in zip(seq.x, seq.y):
                 canvas_markers.append(
                     canvas.CanvasMarker(
-                        self._abs_to_rel(x, x_range, x_min),
-                        self._abs_to_rel(y, y_range, y_min),
+                        abs_to_rel(x, x_range, x_min),
+                        abs_to_rel(y, y_range, y_min),
                         seq.seq_id
                     )
                 )
@@ -158,7 +158,3 @@ class Data(CanvasConvertible):
             canvas_y_axis,
             canvas_legend
         )
-
-    @staticmethod
-    def _abs_to_rel(value: int | float, range_: int | float, min_: int | float) -> float:
-        return (value - min_) / range_

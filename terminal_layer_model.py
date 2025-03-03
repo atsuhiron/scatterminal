@@ -1,3 +1,4 @@
+from __future__ import annotations
 import abc
 import dataclasses
 
@@ -41,10 +42,17 @@ class TerminalLabel(TerminalPoint):
 
 
 @dataclasses.dataclass(frozen=True)
-class TerminalAxis:
+class TerminalXAxis:
     axis_line: list[TerminalMarker]
     tick_labels: list[TerminalLabel]
     axis_label: TerminalLabel | None = None
+
+
+@dataclasses.dataclass(frozen=True)
+class TerminalYAxis:
+    axis_line: list[TerminalMarker]
+    tick_labels: list[TerminalLabel]
+    axis_label: list[TerminalMarker] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -55,8 +63,8 @@ class TerminalLegend:
 @dataclasses.dataclass(frozen=True)
 class Terminal(Plottable):
     plot_markers: list[TerminalMarker]
-    x_axis: TerminalAxis
-    y_axis: TerminalAxis
+    x_axis: TerminalXAxis
+    y_axis: TerminalYAxis
     legend: TerminalLegend
 
     def plot(self) -> None:
