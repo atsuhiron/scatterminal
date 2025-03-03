@@ -170,7 +170,6 @@ class Canvas(TerminalConvertible):
                 )
         return terminal.TerminalYAxis(axis_lines, tick_labels, axis_label)
 
-
     @staticmethod
     def calc_y_tick(canvas_axis: CanvasAxis) -> list[tuple[str, float]]:
         min_and_max = (canvas_axis.min_, canvas_axis.max_)
@@ -180,10 +179,9 @@ class Canvas(TerminalConvertible):
             ticks = Canvas._calc_log_tick(*min_and_max)
 
         use_index = Canvas._use_index(canvas_axis.scale, *min_and_max)
-        if use_index:
-            sd = Canvas._calc_significant_digits(*min_and_max)
-            return [(f"{tick:.{sd}e}", tick) for tick in ticks]
-        return [(f"{tick:f}", tick) for tick in ticks]
+        sd = Canvas._calc_significant_digits(*min_and_max)
+        format_ = "e" if use_index else "f"
+        return [(f"{tick:.{sd}{format_}}", tick) for tick in ticks]
 
     @staticmethod
     def _calc_linear_tick(min_: float, max_: float) -> list[float]:
