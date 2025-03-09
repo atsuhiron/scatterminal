@@ -60,8 +60,6 @@ class CanvasLegend:
 
 
 class _TerminalSize:
-    y_offset = 3  # axis_label, empty, tick_label
-
     def __init__(
             self,
             terminal_size: os.terminal_size,
@@ -71,13 +69,12 @@ class _TerminalSize:
             lower_legend_size: int,  # y offset 2
     ):
         self.terminal_size = terminal_size
-        self.y_tick_label_size = y_tick_label_size
-        self.has_y_axis_label = has_y_axis_label
-        self.right_legend_size = right_legend_size
-        self.lower_legend_size = lower_legend_size
+        self._has_y_axis_label = has_y_axis_label
 
-        self._tot_y_offset = self.y_offset + self.lower_legend_size
-        self._tot_x_offset = self.y_tick_label_size + int(self.has_y_axis_label) + self.right_legend_size + 1  # empty
+        self._tot_y_upper_offset = 1
+        self._tot_y_lower_offset = lower_legend_size + 3  # axis_label, empty, tick_label
+        self._tot_x_left_offset = y_tick_label_size + int(has_y_axis_label) + 1  # empty
+        self._tot_x_right_offset = right_legend_size
 
     @property
     def lines(self) -> int:
@@ -89,17 +86,21 @@ class _TerminalSize:
 
     @property
     def canvas_lines(self) -> int:
-        return self.terminal_size.lines - self._tot_y_offset
+        return self.terminal_size.lines - self._tot_y_lower_offset - self._tot_y_upper_offset
 
     @property
     def canvas_columns(self) -> int:
-        return self.terminal_size.columns - self._tot_x_offset
+        return self.terminal_size.columns - self._tot_x_left_offset - self._tot_x_right_offset
+
+    @property
+    def has_y_axis_label(self) -> bool:
+        return self._has_y_axis_label
 
     def from_canvas_to_terminal_columns(self, val: int) -> int:
-        return val + self._tot_x_offset
+        return val + self._tot_x_left_offset
 
     def from_canvas_to_terminal_lines(self, val: int) -> int:
-        return val + self._tot_y_offset
+        return val + self._tot_y_lower_offset
 
 
 @dataclasses.dataclass(frozen=True)
@@ -142,9 +143,11 @@ class Canvas(TerminalConvertible):
         # generate marker
         terminal_markers = []
         for marker in self.markers:
+            x = self._quantize(marker.x, terminal_size.canvas_columns)
+            y = self._quantize(marker.y, terminal_size.canvas_lines)
             terminal_mark = terminal.TerminalMarker(
-                x=self._quantize(marker.x, terminal_size.canvas_lines),
-                y=self._quantize(marker.y, terminal_size.canvas_columns),
+                x=terminal_size.from_canvas_to_terminal_columns(x),
+                y=terminal_size.from_canvas_to_terminal_lines(y),
                 char=marker_char_dict[marker.marker_group_id]
             )
             terminal_markers.append(terminal_mark)
@@ -160,7 +163,7 @@ class Canvas(TerminalConvertible):
             canvas_axis: CanvasAxis,
             terminal_size: _TerminalSize
     ) -> terminal.TerminalYAxis:
-        min_and_max = (canvas_axis.min_, canvas_axis.max_)
+        min_and_max = Canvas._gen_axis_min_max(label_and_values, canvas_axis)
         axis_label_offset = int(terminal_size.has_y_axis_label)
 
         tick_labels = []
@@ -178,7 +181,7 @@ class Canvas(TerminalConvertible):
             tick_grid_set.add(quantized)
 
         axis_lines = []
-        for i in range(terminal_size.lines):
+        for i in range(terminal_size.canvas_lines):
             if i in tick_grid_set:
                 char = "+"
             else:
@@ -211,8 +214,7 @@ class Canvas(TerminalConvertible):
             canvas_axis: CanvasAxis,
             terminal_size: _TerminalSize
     ) -> terminal.TerminalXAxis:
-        min_and_max = (canvas_axis.min_, canvas_axis.max_)
-        axis_label_offset = terminal_size.y_offset
+        min_and_max = Canvas._gen_axis_min_max(label_and_values, canvas_axis)
 
         tick_labels = []
         tick_grid_set = set()
@@ -221,15 +223,19 @@ class Canvas(TerminalConvertible):
                 rel = abs_to_rel(val, min_and_max[1] - min_and_max[0], min_and_max[0])
             else:
                 rel = abs_to_rel(log(val), log(min_and_max[1]) - log(min_and_max[0]), log(min_and_max[0]))
-            quantized = Canvas._quantize(rel, terminal_size.canvas_lines)
+            quantized = Canvas._quantize(rel, terminal_size.canvas_columns)
             terminal_quantized_shifted = terminal_size.from_canvas_to_terminal_columns(quantized) - len(label) // 2
             tick_labels.append(
-                terminal.TerminalLabel(terminal_quantized_shifted, axis_label_offset, label)
+                terminal.TerminalLabel(
+                    terminal_quantized_shifted,
+                    terminal_size.from_canvas_to_terminal_lines(-1),
+                    label
+                )
             )
             tick_grid_set.add(quantized)
 
         axis_lines = []
-        for i in range(terminal_size.lines):
+        for i in range(terminal_size.canvas_columns):
             if i in tick_grid_set:
                 char = "+"
             else:
@@ -314,7 +320,7 @@ class Canvas(TerminalConvertible):
 
     @staticmethod
     def _quantize(rel_value: float, grid_num: int) -> int:
-        return round(rel_value * grid_num)
+        return round(rel_value * (grid_num - 1))
 
     @staticmethod
     def _gen_marker_char_dict(marker_group_ids: set[int], chars: list[str]) -> dict[int, str]:
@@ -327,6 +333,13 @@ class Canvas(TerminalConvertible):
         for gid in marker_group_ids:
             char_dict[gid] = chars[gid % char_num]
         return char_dict
+
+    @staticmethod
+    def _gen_axis_min_max(label_and_values: list[tuple[str, float]], canvas_axis: CanvasAxis) -> tuple[float, float]:
+        return (
+            min(min(lv[1] for lv in label_and_values), canvas_axis.min_),
+            max(max(lv[1] for lv in label_and_values), canvas_axis.max_),
+        )
 
     def _gen_right_legend(self, marker_char_dict: dict[int, str]) -> tuple[tuple[int, int], terminal.TerminalLegend]:
         legend_element_strings = [f"{marker_char_dict[le.marker_group_id]}: {le.sequence_name}" for le in self.legend.legend_elements]

@@ -119,6 +119,9 @@ def plot_csv(
     data = Data(data_sequences, x_axis, y_axis, DataLegendLoc(legend_loc))
     canvas = data.to_canvas(Canvas)
     terminal_ = canvas.to_terminal(Terminal)
+    for mark in terminal_.plot_markers:
+        print(mark)
+    print(terminal_.line_num, terminal_.col_num)
     terminal_.plot()
 
 
