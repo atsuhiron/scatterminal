@@ -289,7 +289,7 @@ class Canvas(TerminalConvertible):
     @staticmethod
     def _calc_log_tick(min_: float, max_: float, primary_limit: int, secondary_limit: int) -> list[float]:
         value_range = log(max_) - log(min_)
-        tick_scale = exp(round(log(value_range) - 2))
+        tick_scale = exp(round(log(value_range) - 1))
         tick_num = value_range / tick_scale
         if tick_num > primary_limit:
             tick_scale *= 5

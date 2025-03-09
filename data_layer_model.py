@@ -115,7 +115,7 @@ class Data(CanvasConvertible):
                 white_delta = (y_max - y_min) * 0.08
                 canvas_y_range = (y_min - white_delta, y_max + white_delta)
             else:
-                white_delta_ratio = log(y_max/y_min) * 0.08
+                white_delta_ratio = (log(y_max/y_min) * 0.08) + 1
                 canvas_y_range = (y_min / white_delta_ratio, y_max * white_delta_ratio)
         else:
             canvas_y_range = (self.y_axis.min_, self.y_axis.max_)
@@ -128,13 +128,16 @@ class Data(CanvasConvertible):
 
         canvas_markers = []
         canvas_legend_elements = []
+        x_process_func = log if self.x_axis.scale == DataScaleType.log else lambda v: v
+        y_process_func = log if self.y_axis.scale == DataScaleType.log else lambda v: v
+
         for seq in self.data:
             # marker 追加
             for x, y in zip(seq.x, seq.y):
                 canvas_markers.append(
                     canvas.CanvasMarker(
-                        abs_to_rel(x, x_range, x_min),
-                        abs_to_rel(y, y_range, y_min),
+                        abs_to_rel(x_process_func(x), x_range, x_min),
+                        abs_to_rel(y_process_func(y), y_range, y_min),
                         seq.seq_id
                     )
                 )
