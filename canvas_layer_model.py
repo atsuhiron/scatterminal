@@ -229,7 +229,8 @@ class Canvas(TerminalConvertible):
                 terminal.TerminalLabel(
                     terminal_quantized_shifted,
                     terminal_size.from_canvas_to_terminal_lines(-1),
-                    label
+                    label,
+                    allow_left_shift=True
                 )
             )
             tick_grid_set.add(quantized)

@@ -123,4 +123,4 @@ def plot_csv(
 
 
 if __name__ == "__main__":
-    plot_csv(["samples/sample_double_column_power.csv"], y_scale="log", legend_loc="lower")
+    plot_csv(["samples/sample_double_column_power_contain_nega.csv"], y_scale="log", legend_loc="lower")

@@ -1,4 +1,6 @@
-from typing import Type
+from __future__ import annotations
+
+from typing import Callable, Type
 import abc
 import dataclasses
 from enum import Enum
@@ -32,6 +34,14 @@ class DataSequence:
             raise ValueError("y must be list[int | float: index={0}".format(self.seq_id))
         if (self.name is not None) and (not self.name.isascii()):
             raise ValueError("Sequence name must be ascii: index={0}".format(self.seq_id))
+
+    def create_filtered(self, filter_func: Callable[[tuple[int | float, int | float]], bool]) -> DataSequence:
+        new_x = []
+        new_y = []
+        for xy_pair in filter(filter_func, zip(self.x, self.y)):
+            new_x.append(xy_pair[0])
+            new_y.append(xy_pair[1])
+        return DataSequence(new_x, new_y, self.seq_id, self.name)
 
 
 class DataScaleType(str, Enum):
@@ -77,11 +87,21 @@ class Data(CanvasConvertible):
                     warnings.warn("Non-positive value is detected on log-scale. This data point is not plotted.")
 
     def to_canvas(self, canvas_type: Type[canvas.TerminalConvertible]) -> canvas.TerminalConvertible:
+        # positive-pass filter
+        if self.x_axis.scale == DataScaleType.log:
+            filtered_data = [datum.create_filtered(lambda xy: xy[0] > 0) for datum in self.data]
+        else:
+            filtered_data = self.data
+
+        if self.y_axis.scale == DataScaleType.log:
+            filtered_data = [datum.create_filtered(lambda xy: xy[1] > 0) for datum in filtered_data]
+        else:
+            filtered_data = filtered_data
+
         is_x_range_undef = self.x_axis.min_ is None
         if is_x_range_undef:
-            # TODO: log の時は正の値だけfilterする
-            x_min = min(min(datum.x) for datum in self.data)
-            x_max = max(max(datum.x) for datum in self.data)
+            x_min = min(min(datum.x) for datum in filtered_data)
+            x_max = max(max(datum.x) for datum in filtered_data)
         else:
             x_min = self.x_axis.min_
             x_max = self.x_axis.max_
@@ -104,8 +124,8 @@ class Data(CanvasConvertible):
 
         is_y_range_undef = self.y_axis.min_ is None
         if is_y_range_undef:
-            y_min = min(min(datum.y) for datum in self.data)
-            y_max = max(max(datum.y) for datum in self.data)
+            y_min = min(min(datum.y) for datum in filtered_data)
+            y_max = max(max(datum.y) for datum in filtered_data)
         else:
             y_min = self.y_axis.min_
             y_max = self.y_axis.max_
@@ -131,7 +151,7 @@ class Data(CanvasConvertible):
         x_process_func = log if self.x_axis.scale == DataScaleType.log else lambda v: v
         y_process_func = log if self.y_axis.scale == DataScaleType.log else lambda v: v
 
-        for seq in self.data:
+        for seq in filtered_data:
             # marker 追加
             for x, y in zip(seq.x, seq.y):
                 canvas_markers.append(

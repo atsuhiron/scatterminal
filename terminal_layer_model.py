@@ -41,6 +41,7 @@ class TerminalMarker(TerminalPoint):
 @dataclasses.dataclass(frozen=True)
 class TerminalLabel(TerminalPoint):
     label: str
+    allow_left_shift: bool = False
 
     def __len__(self):
         return len(self.label)
@@ -81,6 +82,11 @@ class _CharField:
         self.char_field[marker.y][marker.x] = marker.char
 
     def write_label(self, label: TerminalLabel):
+        if label.allow_left_shift and (label.x + len(label)) > len(self.char_field[0]):
+            # ラベルの左移動が許可されている and ラベルが右にはみ出ている
+            shift = label.x + len(label) - len(self.char_field[0])
+            label = TerminalLabel(label.x - shift, label.y, label.label)
+
         y = label.y
         for i in range(len(label)):
             x = label.x + i
