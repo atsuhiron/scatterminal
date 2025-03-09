@@ -1,0 +1,26 @@
+[project]
+name = "scatterminal"
+version = "0.1.0"
+description = "Draw scatter plot on terminal"
+readme = "README.md"
+authors = [
+    { name = "atsuhiron", email = "atsuronreplaced@gmail.com" }
+]
+requires-python = ">=3.10.0"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "hatch>=1.14.0",
+    "pytest>=8.3.5",
+    "pytest-cov>=6.0.0",
+    "tox>=4.24.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+testpaths = ["tests"]

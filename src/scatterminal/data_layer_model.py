@@ -6,8 +6,8 @@ import dataclasses
 from enum import Enum
 import warnings
 
-from common import log, abs_to_rel
-import canvas_layer_model as canvas
+from scatterminal.common import log, abs_to_rel
+import scatterminal.canvas_layer_model as canvas
 
 
 class CanvasConvertible(metaclass=abc.ABCMeta):

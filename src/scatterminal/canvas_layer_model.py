@@ -7,8 +7,8 @@ import os
 import math
 import warnings
 
-from common import log, exp, abs_to_rel
-import terminal_layer_model as terminal
+from scatterminal.common import log, exp, abs_to_rel
+import scatterminal.terminal_layer_model as terminal
 
 
 class TerminalConvertible(metaclass=abc.ABCMeta):
