@@ -53,11 +53,18 @@ class DataAxis:
             raise ValueError("Axis min and Axis max should be defined simultaneously")
 
 
+class DataLegendLoc(str, Enum):
+    none = "none"
+    lower = "lower"
+    right = "right"
+
+
 @dataclasses.dataclass(frozen=True)
 class Data(CanvasConvertible):
     data: list[DataSequence]
     x_axis: DataAxis
     y_axis: DataAxis
+    legend_loc: DataLegendLoc
 
     def __post_init__(self):
         if self.x_axis.scale == DataScaleType.log:
@@ -72,7 +79,7 @@ class Data(CanvasConvertible):
     def to_canvas(self, canvas_type: Type[canvas.TerminalConvertible]) -> canvas.TerminalConvertible:
         is_x_range_undef = self.x_axis.min_ is None
         if is_x_range_undef:
-            # log の時は正の値だけfilterする
+            # TODO: log の時は正の値だけfilterする
             x_min = min(min(datum.x) for datum in self.data)
             x_max = max(max(datum.x) for datum in self.data)
         else:
@@ -137,7 +144,7 @@ class Data(CanvasConvertible):
                 canvas.CanvasLegendElement(seq.seq_id, seq.name)
             )
 
-        canvas_legend = canvas.CanvasLegend(canvas_legend_elements)
+        canvas_legend = canvas.CanvasLegend(canvas_legend_elements, canvas.CanvasLegendLoc(self.legend_loc))
 
         # NOTE: データの min, max をそのまま渡している
         canvas_x_axis = canvas.CanvasAxis(

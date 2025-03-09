@@ -1,6 +1,6 @@
 import dataclasses
 
-from data_layer_model import DataScaleType, DataAxis, DataSequence, Data
+from data_layer_model import DataScaleType, DataAxis, DataSequence, Data, DataLegendLoc
 from canvas_layer_model import Canvas
 from terminal_layer_model import Terminal
 
@@ -103,6 +103,7 @@ def plot_csv(
         y_scale: str = "linear",
         x_lim: tuple[float, float] | None = None,
         y_lim: tuple[float, float] | None = None,
+        legend_loc: str = "right"
 ) -> None:
     next_id = 0
     data_sequences = []
@@ -115,7 +116,7 @@ def plot_csv(
     y_lim = (None, None) if y_lim is None else y_lim
     y_axis = DataAxis(DataScaleType(y_scale), y_label, y_lim[0], y_lim[1])
 
-    data = Data(data_sequences, x_axis, y_axis)
+    data = Data(data_sequences, x_axis, y_axis, DataLegendLoc(legend_loc))
     canvas = data.to_canvas(Canvas)
     terminal = canvas.to_terminal(Terminal)
     terminal.plot()
