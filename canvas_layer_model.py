@@ -349,7 +349,7 @@ class Canvas(TerminalConvertible):
         legend_labels = []
         for i_line in range(len(legend_element_strings)):
             x = _terminal_size.columns - max_legend_size
-            y = _terminal_size.lines - i_line - 1
+            y = _terminal_size.lines - i_line - 2
             legend_labels.append(
                 terminal.TerminalLabel(x, y, legend_element_strings[i_line])
             )
@@ -369,7 +369,11 @@ class Canvas(TerminalConvertible):
             y = legend_line_num - i_line - 1
             x = 0
             for j_legend in range(max_legend_num_per_line):
-                legend = legend_element_strings[max_legend_num_per_line * i_line + j_legend]
+                index = max_legend_num_per_line * i_line + j_legend
+                if index >= len(legend_element_strings):
+                    # end line
+                    break
+                legend = legend_element_strings[index]
                 legend_labels.append(
                     terminal.TerminalLabel(x, y, legend)
                 )
