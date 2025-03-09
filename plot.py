@@ -118,8 +118,8 @@ def plot_csv(
 
     data = Data(data_sequences, x_axis, y_axis, DataLegendLoc(legend_loc))
     canvas = data.to_canvas(Canvas)
-    terminal = canvas.to_terminal(Terminal)
-    terminal.plot()
+    terminal_ = canvas.to_terminal(Terminal)
+    terminal_.plot()
 
 
 if __name__ == "__main__":

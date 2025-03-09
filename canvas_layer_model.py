@@ -149,7 +149,10 @@ class Canvas(TerminalConvertible):
             )
             terminal_markers.append(terminal_mark)
 
-        return terminal.Terminal(terminal_markers, terminal_x_axis, terminal_y_axis, terminal_legend)
+        return terminal.Terminal(
+            terminal_size.lines, terminal_size.columns,
+            terminal_markers, terminal_x_axis, terminal_y_axis, terminal_legend
+        )
 
     @staticmethod
     def gen_y_axis(

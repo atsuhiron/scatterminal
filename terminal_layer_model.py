@@ -17,19 +17,6 @@ class _CharFieldWarning(str):
     pass
 
 
-class _CharField:
-    def __init__(self, col_num: int, line_num: int):
-        self.char_field = [["" for _c in range(col_num)] for _l in range(line_num)]
-
-    def write(self, char: str, col: int, line: int) -> list[_CharFieldWarning]:
-        cfw_list = []
-        if self.char_field[line][col]:
-            cfw = _CharFieldWarning("Overlapping markers detected. If you need more accurate plot, consider changing the terminal size.")
-            cfw_list.append(cfw)
-        self.char_field[line][col] = char
-        return cfw_list
-
-
 @dataclasses.dataclass(frozen=True)
 class TerminalPoint:
     x: int
@@ -58,9 +45,6 @@ class TerminalLabel(TerminalPoint):
     def __len__(self):
         return len(self.label)
 
-    def get_relative_start_point(self) -> int:
-        return -(len(self) // 2)
-
 
 @dataclasses.dataclass(frozen=True)
 class TerminalXAxis:
@@ -81,8 +65,45 @@ class TerminalLegend:
     legend_elements: list[TerminalLabel]
 
 
+class _CharField:
+    def __init__(self, line_num: int, col_num: int):
+        self.char_field: list[list[str]] = [[" " for _c in range(col_num)] for _l in range(line_num)]
+        self.cfw_list = []
+
+    def write_marker(self, marker: TerminalMarker):
+        if self.char_field[marker.y][marker.x] != " ":
+            self.cfw_list.append(
+                _CharFieldWarning(
+                    "Overlapping markers detected. "
+                    "If you need more accurate plot, consider changing the terminal size: (x=%d, y=%d)" % (marker.x, marker.y)
+                )
+            )
+        self.char_field[marker.y][marker.x] = marker.char
+
+    def write_label(self, label: TerminalLabel):
+        y = label.y
+        for i in range(len(label)):
+            x = label.x + i
+            if self.char_field[y][x] != " ":
+                self.cfw_list.append(
+                    _CharFieldWarning(
+                        "Overlapping labels detected. "
+                        "If you need more accurate plot, consider changing the terminal size: (x=%d, y=%d)" % (x, y)
+                    )
+                )
+            self.char_field[y][x] = label.label[i]
+
+    def project(self) -> None:
+        for w in self.cfw_list:
+            print(w)
+        for line in reversed(self.char_field):
+            print("".join(line))
+
+
 @dataclasses.dataclass(frozen=True)
 class Terminal(Plottable):
+    line_num: int
+    col_num: int
     plot_markers: list[TerminalMarker]
     x_axis: TerminalXAxis
     y_axis: TerminalYAxis
@@ -93,4 +114,31 @@ class Terminal(Plottable):
         return ["*", "o", "+", "x", "v", "#", "."]
 
     def plot(self) -> None:
-        pass
+        cf = _CharField(line_num=self.line_num, col_num=self.col_num)
+
+        # x axis
+        for marker in self.x_axis.axis_line:
+            cf.write_marker(marker)
+        for label in self.x_axis.tick_labels:
+            cf.write_label(label)
+        if self.x_axis.axis_label:
+            cf.write_label(self.x_axis.axis_label)
+
+        # y axis
+        for marker in self.y_axis.axis_line:
+            cf.write_marker(marker)
+        for label in self.y_axis.tick_labels:
+            cf.write_label(label)
+        for marker in self.y_axis.axis_label or []:
+            cf.write_marker(marker)
+
+        # legend
+        if self.legend:
+            for legend in self.legend.legend_elements:
+                cf.write_label(legend)
+
+        # marker
+        for marker in self.plot_markers:
+            cf.write_marker(marker)
+
+        cf.project()
