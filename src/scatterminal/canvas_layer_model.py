@@ -328,7 +328,7 @@ class Canvas(TerminalConvertible):
         char_num = len(chars)
         if len(marker_group_ids) > char_num:
             warnings.warn("The number of data series exceeds the number of marker types available. "
-                          "Then, Markers are reused making data identification difficult.")
+                          "Then, Markers are reused making data identification difficult.", UserWarning)
 
         char_dict = {}
         for gid in marker_group_ids:

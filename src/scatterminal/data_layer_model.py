@@ -26,14 +26,14 @@ class DataSequence:
     def __post_init__(self):
         if len(self.x) != len(self.y):
             raise ValueError(
-                "length of x and y must be equal: (index={0}, len(x)={1}, len(y)={2})".format(self.seq_id, len(self.x), len(self.y))
+                "length of x and y must be equal: (seq_id={0}, len(x)={1}, len(y)={2})".format(self.seq_id, len(self.x), len(self.y))
             )
         if not all(map(lambda x: isinstance(x, (int, float)), self.x)):
-            raise ValueError("x must be list[int | float]: index={0}".format(self.seq_id))
+            raise TypeError("x must be list[int | float]: seq_id={0}".format(self.seq_id))
         if not all(map(lambda y: isinstance(y, (int, float)), self.y)):
-            raise ValueError("y must be list[int | float: index={0}".format(self.seq_id))
+            raise TypeError("y must be list[int | float]: seq_id={0}".format(self.seq_id))
         if (self.name is not None) and (not self.name.isascii()):
-            raise ValueError("Sequence name must be ascii: index={0}".format(self.seq_id))
+            raise ValueError("Sequence name must be ascii: seq_id={0}".format(self.seq_id))
 
     def create_filtered(self, filter_func: Callable[[tuple[int | float, int | float]], bool]) -> DataSequence:
         new_x = []
@@ -58,9 +58,14 @@ class DataAxis:
 
     def __post_init__(self):
         if (self.name is not None) and (not self.name.isascii()):
-            raise ValueError("Axis name must be ascii")
+            raise ValueError("Axis name must be ascii: %s" % self.name)
         if (self.min_ is None) != (self.max_ is None):
-            raise ValueError("Axis min and Axis max should be defined simultaneously")
+            raise ValueError("Axis min and Axis max should be defined simultaneously: (min, max)=(%s, %s)" % (self.min_, self.max_))
+        if (self.min_ is not None) and (self.max_ is not None) and self.min_ >= self.max_:
+            raise ValueError("Axis min is larger than max: (min, max)=(%f, %f)" % (self.min_, self.max_))
+        if self.scale == DataScaleType.log:
+            if (self.min_ is not None) and (self.min_ <= 0):
+                raise ValueError("Axis min must be positive value on log-scale")
 
 
 class DataLegendLoc(str, Enum):
@@ -80,11 +85,17 @@ class Data(CanvasConvertible):
         if self.x_axis.scale == DataScaleType.log:
             for datum in self.data:
                 if min(datum.x) <= 0:
-                    warnings.warn("Non-positive value is detected on log-scale. This data point is not plotted.")
+                    warnings.warn(
+                        "Non-positive value is detected on log-scale x axis. This data point is not plotted.: seq_id=%d" % datum.seq_id,
+                        UserWarning
+                    )
         if self.y_axis.scale == DataScaleType.log:
             for datum in self.data:
                 if min(datum.y) <= 0:
-                    warnings.warn("Non-positive value is detected on log-scale. This data point is not plotted.")
+                    warnings.warn(
+                        "Non-positive value is detected on log-scale y axis. This data point is not plotted.: seq_id=%d" % datum.seq_id,
+                        UserWarning
+                    )
 
     def to_canvas(self, canvas_type: Type[canvas.TerminalConvertible]) -> canvas.TerminalConvertible:
         # positive-pass filter
