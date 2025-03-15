@@ -71,12 +71,10 @@ def main():
     )
     parser.add_argument(
         "--xlabel",
-        choices=[scale.value for scale in DataScaleType],
         help="Label of x axis"
     )
     parser.add_argument(
         "--ylabel",
-        choices=[scale.value for scale in DataScaleType],
         help="Label of y axis"
     )
     parser.add_argument(

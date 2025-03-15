@@ -200,11 +200,11 @@ class Canvas(TerminalConvertible):
             if len(canvas_axis.name) > terminal_size.canvas_lines:
                 raise ValueError("Too large y axis label: size=%d, max=%d" % (len(canvas_axis.name), terminal_size.canvas_lines))
 
-            start_y = (terminal_size.lines // 2) - len(canvas_axis.name) // 2
+            start_y = (terminal_size.lines + len(canvas_axis.name)) // 2
             axis_label = []
             for i in range(len(canvas_axis.name)):
                 axis_label.append(
-                    terminal.TerminalMarker(0, start_y + i, canvas_axis.name[i])
+                    terminal.TerminalMarker(0, start_y - i, canvas_axis.name[i])
                 )
         return terminal.TerminalYAxis(axis_lines, tick_labels, axis_label)
 
@@ -255,7 +255,7 @@ class Canvas(TerminalConvertible):
             if len(canvas_axis.name) > terminal_size.canvas_columns:
                 raise ValueError("Too large x axis label: size=%d, max=%d" % (len(canvas_axis.name), terminal_size.canvas_columns))
             canvas_center_x = terminal_size.from_canvas_to_terminal_columns(terminal_size.canvas_columns // 2) - len(canvas_axis.name) // 2
-            axis_label = terminal.TerminalLabel(canvas_center_x, terminal_size.from_canvas_to_terminal_lines(0), canvas_axis.name)
+            axis_label = terminal.TerminalLabel(canvas_center_x, terminal_size.from_canvas_to_terminal_lines(-2), canvas_axis.name)
         return terminal.TerminalXAxis(axis_lines, tick_labels, axis_label)
 
     @staticmethod
