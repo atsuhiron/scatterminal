@@ -22,6 +22,7 @@ class DataSequence:
     y: list[int | float]
     seq_id: int
     name: str | None = None
+    x_name: str | None = None
 
     def __post_init__(self):
         if len(self.x) != len(self.y):
@@ -34,6 +35,8 @@ class DataSequence:
             raise TypeError("y must be list[int | float]: seq_id={0}".format(self.seq_id))
         if (self.name is not None) and (not self.name.isascii()):
             raise ValueError("Sequence name must be ascii: seq_id={0}".format(self.seq_id))
+        if (self.x_name is not None) and (not self.x_name.isascii()):
+            raise ValueError("Sequence x_name must be ascii: seq_id={0}".format(self.seq_id))
 
     def create_filtered(self, filter_func: Callable[[tuple[int | float, int | float]], bool]) -> DataSequence:
         new_x = []

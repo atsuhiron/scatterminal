@@ -32,6 +32,16 @@ def plot_csv(
             str_cells = read_file(f, file_path.split(".")[-1], sep)
         data_sequences.extend(parse(str_cells, next_id))
         next_id = len(data_sequences)
+
+    if x_label is None:
+        x_labels = set(seq.x_name for seq in data_sequences)
+        if len(x_labels) == 1:
+            x_label = x_labels.pop()
+    if y_label is None:
+        y_labels = set(seq.name for seq in data_sequences)
+        if len(y_labels) == 1:
+            y_label = y_labels.pop()
+
     x_lim = (None, None) if x_lim is None else x_lim
     x_axis = DataAxis(DataScaleType(x_scale), x_label, x_lim[0], x_lim[1])
     y_lim = (None, None) if y_lim is None else y_lim
@@ -110,3 +120,7 @@ def main():
         y_lim=argv.ylim,
         legend_loc=argv.legend_loc
     )
+
+
+if __name__ == "__main__":
+    plot_csv(["../../tests/samples/double_column.csv"])

@@ -72,12 +72,13 @@ def parse(str_cells: list[list[str]], next_id: int) -> list[DataSequence]:
 
     if col_num == 1:
         content = parsed_cells[0][content_slice]
-        return [DataSequence(list(range(len(content))), content, next_id, header_line[0])]
+        return [DataSequence(list(range(len(content))), content, next_id, header_line[0], None)]
     return [
         DataSequence(
             parsed_cells[0][content_slice],
             parsed_cells[i][content_slice],
             next_id + i - 1,
-            header_line[i]
+            header_line[i],
+            header_line[0]
         ) for i in range(1, col_num)
     ]

@@ -105,31 +105,31 @@ def test_read_file_csv_file_type_error():
                 # double column, no label
                 [["0.5", "42.1"], ["1.5", "42.2"]],
                 0,
-                [DataSequence([0.5, 1.5], [42.1, 42.2], 0, None)]
+                [DataSequence([0.5, 1.5], [42.1, 42.2], 0, None, None)]
         ),
         (
                 # double column, label specified
                 [["x", "y"], ["0.5", "42.1"], ["1.5", "42.2"]],
                 0,
-                [DataSequence([0.5, 1.5], [42.1, 42.2], 0, "y")]
+                [DataSequence([0.5, 1.5], [42.1, 42.2], 0, "y", "x")]
         ),
         (
                 # triple column, no label
                 [["0.5", "42.1", "100.4"], ["1.5", "42.2", "103.5"]],
                 0,
-                [DataSequence([0.5, 1.5], [42.1, 42.2], 0, None), DataSequence([0.5, 1.5], [100.4, 103.5], 1, None)]
+                [DataSequence([0.5, 1.5], [42.1, 42.2], 0, None, None), DataSequence([0.5, 1.5], [100.4, 103.5], 1, None, None)]
         ),
         (
                 # triple column, label specified
                 [["x", "y1", "y2"], ["0.5", "42.1", "100.4"], ["1.5", "42.2", "103.5"]],
                 0,
-                [DataSequence([0.5, 1.5], [42.1, 42.2], 0, "y1"), DataSequence([0.5, 1.5], [100.4, 103.5], 1, "y2")]
+                [DataSequence([0.5, 1.5], [42.1, 42.2], 0, "y1", "x"), DataSequence([0.5, 1.5], [100.4, 103.5], 1, "y2", "x")]
         ),
         (
                 # triple column, label specified, next_id shifted
                 [["x", "y1", "y2"], ["0.5", "42.1", "100.4"], ["1.5", "42.2", "103.5"]],
                 5,
-                [DataSequence([0.5, 1.5], [42.1, 42.2], 5, "y1"), DataSequence([0.5, 1.5], [100.4, 103.5], 6, "y2")]
+                [DataSequence([0.5, 1.5], [42.1, 42.2], 5, "y1", "x"), DataSequence([0.5, 1.5], [100.4, 103.5], 6, "y2", "x")]
         ),
     ]
 )

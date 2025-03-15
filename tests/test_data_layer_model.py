@@ -101,17 +101,22 @@ def test_data_sequence_create_filtered(
 
 
 @pytest.mark.parametrize(
-    ("x", "y", "seq_id", "name", "error_type", "expected"),
+    ("x", "y", "seq_id", "name", "x_name", "error_type", "expected"),
     [
-        ([0], [1, 2], 9, None, ValueError, "length of x and y must be equal: (seq_id=9, len(x)=1, len(y)=2)"),
-        ([0, "A"], [1, 2], 9, None, TypeError, "x must be list[int | float]: seq_id=9"),
-        ([0, 1], [1, "A"], 9, None, TypeError, "y must be list[int | float]: seq_id=9"),
-        ([0, 1], [1, 2], 9, "あ", ValueError, "Sequence name must be ascii: seq_id=9")
+        ([0], [1, 2], 9, None, None, ValueError, "length of x and y must be equal: (seq_id=9, len(x)=1, len(y)=2)"),
+        ([0, "A"], [1, 2], 9, None, None, TypeError, "x must be list[int | float]: seq_id=9"),
+        ([0, 1], [1, "A"], 9, None, None, TypeError, "y must be list[int | float]: seq_id=9"),
+        ([0, 1], [1, 2], 9, "あ", None, ValueError, "Sequence name must be ascii: seq_id=9"),
+        ([0, 1], [1, 2], 9, None, "あ", ValueError, "Sequence x_name must be ascii: seq_id=9")
     ]
 )
-def test_data_sequence_error(x: list[int | str], y: list[int | str], seq_id, name: str | None, error_type: type[Exception], expected: str):
+def test_data_sequence_error(
+        x: list[int | str], y: list[int | str],
+        seq_id, name: str | None, x_name: str | None,
+        error_type: type[Exception], expected: str
+):
     with pytest.raises(error_type) as e:
-        _ = dlm.DataSequence(x, y, seq_id, name)
+        _ = dlm.DataSequence(x, y, seq_id, name, x_name)
     assert str(e.value) == expected
 
 
