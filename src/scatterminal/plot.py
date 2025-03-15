@@ -27,6 +27,9 @@ def plot_csv(
 ) -> None:
     next_id = 0
     data_sequences = []
+    if len(file_paths) == 0:
+        raise ValueError("Specify at least one file")
+
     for file_path in file_paths:
         with open(file_path, "r") as f:
             str_cells = read_file(f, file_path.split(".")[-1], sep)
