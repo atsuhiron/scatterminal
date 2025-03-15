@@ -1,6 +1,6 @@
 [project]
 name = "scatterminal"
-version = "0.1.0"
+version = "0.1.1"
 description = "Draw scatter plot on terminal"
 readme = "README.md"
 authors = [
@@ -8,9 +8,17 @@ authors = [
 ]
 requires-python = ">=3.10.0"
 dependencies = []
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Terminals",
+    "Topic :: Scientific/Engineering :: Visualization"
+]
 
 [project.scripts]
 plot = "scatterminal.plot:main"
+
+
 
 [build-system]
 requires = ["hatchling"]
@@ -27,3 +35,5 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = "src"
 testpaths = ["tests"]
+
+
