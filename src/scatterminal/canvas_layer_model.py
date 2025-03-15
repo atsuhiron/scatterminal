@@ -11,6 +11,10 @@ from scatterminal.common import log, exp, abs_to_rel
 import scatterminal.terminal_layer_model as terminal
 
 
+def _quantize(rel_value: float, grid_num: int) -> int:
+    return round(rel_value * (grid_num - 1))
+
+
 class TerminalConvertible(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def to_terminal(self, plot_type: Type[terminal.Plottable]) -> terminal.Plottable:
@@ -31,32 +35,6 @@ class CanvasMarker(CanvasPoint):
 class CanvasScaleType(str, Enum):
     linear = "linear"
     log = "log"
-
-
-@dataclasses.dataclass(frozen=True)
-class CanvasAxis:
-    min_: float
-    max_: float
-    scale: CanvasScaleType = CanvasScaleType.linear
-    name: str | None = None
-
-
-@dataclasses.dataclass(frozen=True)
-class CanvasLegendElement:
-    marker_group_id: int
-    sequence_name: str | None
-
-
-class CanvasLegendLoc(str, Enum):
-    none = "none"
-    lower = "lower"
-    right = "right"
-
-
-@dataclasses.dataclass(frozen=True)
-class CanvasLegend:
-    legend_elements: list[CanvasLegendElement]
-    loc: CanvasLegendLoc
 
 
 class _TerminalSize:
@@ -104,76 +82,28 @@ class _TerminalSize:
 
 
 @dataclasses.dataclass(frozen=True)
-class Canvas(TerminalConvertible):
-    markers: list[CanvasMarker]
-    x_axis: CanvasAxis
-    y_axis: CanvasAxis
-    legend: CanvasLegend
+class CanvasAxis:
+    min_: float
+    max_: float
+    scale: CanvasScaleType = CanvasScaleType.linear
+    name: str | None = None
 
-    def to_terminal(self, plot_type: Type[terminal.Plottable]) -> terminal.Plottable:
-        # generate marker dict
-        marker_char_dict = self._gen_marker_char_dict(set(marker.marker_group_id for marker in self.markers), plot_type.get_marker_chars())
-
-        # generate legend
-        if self.legend.loc == CanvasLegendLoc.right:
-            legend_offsets, terminal_legend = self._gen_right_legend(marker_char_dict)
-        elif self.legend.loc == CanvasLegendLoc.lower:
-            legend_offsets, terminal_legend = self._gen_lower_legend(marker_char_dict)
-        else:
-            legend_offsets: tuple[int, int] = 0, 0
-            terminal_legend = None
-
-        # generate y axis
-        tick_label_and_values_y = self._calc_tick(self.y_axis)
-        max_label_size_y = max(len(tick_label_and_value[0]) for tick_label_and_value in tick_label_and_values_y)
-        terminal_size = _TerminalSize(shutil.get_terminal_size(), max_label_size_y, self.y_axis.name is not None, *legend_offsets)
-        terminal_y_axis = self.gen_y_axis(tick_label_and_values_y, self.y_axis, terminal_size)
-
-        # generate x axis
-        primary, secondary = 18, 8
-        tick_label_and_values_x = self._calc_tick(self.x_axis)
-        total_label_size_x = sum(len(tick_label_and_value[0]) for tick_label_and_value in tick_label_and_values_x)
-        while total_label_size_x > (terminal_size.columns / 2):
-            primary -= 1
-            secondary -= 1
-            tick_label_and_values_x = self._calc_tick(self.x_axis, primary, secondary)
-            total_label_size_x = sum(len(tick_label_and_value[0]) for tick_label_and_value in tick_label_and_values_x)
-        terminal_x_axis = self.gen_x_axis(tick_label_and_values_x, self.x_axis, terminal_size)
-
-        # generate marker
-        terminal_markers = []
-        for marker in self.markers:
-            x = self._quantize(marker.x, terminal_size.canvas_columns)
-            y = self._quantize(marker.y, terminal_size.canvas_lines)
-            terminal_mark = terminal.TerminalMarker(
-                x=terminal_size.from_canvas_to_terminal_columns(x),
-                y=terminal_size.from_canvas_to_terminal_lines(y),
-                char=marker_char_dict[marker.marker_group_id]
-            )
-            terminal_markers.append(terminal_mark)
-
-        return terminal.Terminal(
-            terminal_size.lines, terminal_size.columns,
-            terminal_markers, terminal_x_axis, terminal_y_axis, terminal_legend
-        )
-
-    @staticmethod
     def gen_y_axis(
+            self,
             label_and_values: list[tuple[str, float]],
-            canvas_axis: CanvasAxis,
             terminal_size: _TerminalSize
     ) -> terminal.TerminalYAxis:
-        min_and_max = Canvas._gen_axis_min_max(label_and_values, canvas_axis)
+        min_and_max = self._gen_axis_min_max(label_and_values)
         axis_label_offset = int(terminal_size.has_y_axis_label)
 
         tick_labels = []
         tick_grid_set = set()
         for label, val in label_and_values:
-            if canvas_axis.scale == CanvasScaleType.linear:
+            if self.scale == CanvasScaleType.linear:
                 rel = abs_to_rel(val, min_and_max[1] - min_and_max[0], min_and_max[0])
             else:
                 rel = abs_to_rel(log(val), log(min_and_max[1]) - log(min_and_max[0]), log(min_and_max[0]))
-            quantized = Canvas._quantize(rel, terminal_size.canvas_lines)
+            quantized = _quantize(rel, terminal_size.canvas_lines)
             terminal_quantized = terminal_size.from_canvas_to_terminal_lines(quantized)
             tick_labels.append(
                 terminal.TerminalLabel(axis_label_offset, terminal_quantized, label)
@@ -194,36 +124,35 @@ class Canvas(TerminalConvertible):
                 )
             )
 
-        if canvas_axis.name is None:
+        if self.name is None:
             axis_label = None
         else:
-            if len(canvas_axis.name) > terminal_size.canvas_lines:
-                raise ValueError("Too large y axis label: size=%d, max=%d" % (len(canvas_axis.name), terminal_size.canvas_lines))
+            if len(self.name) > terminal_size.canvas_lines:
+                raise ValueError("Too large y axis label: size=%d, max=%d" % (len(self.name), terminal_size.canvas_lines))
 
-            start_y = (terminal_size.lines + len(canvas_axis.name)) // 2
+            start_y = (terminal_size.lines + len(self.name)) // 2
             axis_label = []
-            for i in range(len(canvas_axis.name)):
+            for i in range(len(self.name)):
                 axis_label.append(
-                    terminal.TerminalMarker(0, start_y - i, canvas_axis.name[i])
+                    terminal.TerminalMarker(0, start_y - i, self.name[i])
                 )
         return terminal.TerminalYAxis(axis_lines, tick_labels, axis_label)
 
-    @staticmethod
     def gen_x_axis(
+            self,
             label_and_values: list[tuple[str, float]],
-            canvas_axis: CanvasAxis,
             terminal_size: _TerminalSize
     ) -> terminal.TerminalXAxis:
-        min_and_max = Canvas._gen_axis_min_max(label_and_values, canvas_axis)
+        min_and_max = self._gen_axis_min_max(label_and_values)
 
         tick_labels = []
         tick_grid_set = set()
         for label, val in label_and_values:
-            if canvas_axis.scale == CanvasScaleType.linear:
+            if self.scale == CanvasScaleType.linear:
                 rel = abs_to_rel(val, min_and_max[1] - min_and_max[0], min_and_max[0])
             else:
                 rel = abs_to_rel(log(val), log(min_and_max[1]) - log(min_and_max[0]), log(min_and_max[0]))
-            quantized = Canvas._quantize(rel, terminal_size.canvas_columns)
+            quantized = _quantize(rel, terminal_size.canvas_columns)
             terminal_quantized_shifted = terminal_size.from_canvas_to_terminal_columns(quantized) - len(label) // 2
             tick_labels.append(
                 terminal.TerminalLabel(
@@ -249,25 +178,24 @@ class Canvas(TerminalConvertible):
                 )
             )
 
-        if canvas_axis.name is None:
+        if self.name is None:
             axis_label = None
         else:
-            if len(canvas_axis.name) > terminal_size.canvas_columns:
-                raise ValueError("Too large x axis label: size=%d, max=%d" % (len(canvas_axis.name), terminal_size.canvas_columns))
-            canvas_center_x = terminal_size.from_canvas_to_terminal_columns(terminal_size.canvas_columns // 2) - len(canvas_axis.name) // 2
-            axis_label = terminal.TerminalLabel(canvas_center_x, terminal_size.from_canvas_to_terminal_lines(-2), canvas_axis.name)
+            if len(self.name) > terminal_size.canvas_columns:
+                raise ValueError("Too large x axis label: size=%d, max=%d" % (len(self.name), terminal_size.canvas_columns))
+            canvas_center_x = terminal_size.from_canvas_to_terminal_columns(terminal_size.canvas_columns // 2) - len(self.name) // 2
+            axis_label = terminal.TerminalLabel(canvas_center_x, terminal_size.from_canvas_to_terminal_lines(-2), self.name)
         return terminal.TerminalXAxis(axis_lines, tick_labels, axis_label)
 
-    @staticmethod
-    def _calc_tick(canvas_axis: CanvasAxis, primary_limit: int = 20, secondary_limit: int = 10) -> list[tuple[str, float]]:
-        min_and_max = (canvas_axis.min_, canvas_axis.max_)
-        if canvas_axis.scale == CanvasScaleType.linear:
-            ticks = Canvas._calc_linear_tick(*min_and_max, *(primary_limit, secondary_limit))
+    def calc_tick(self, primary_limit: int = 20, secondary_limit: int = 10) -> list[tuple[str, float]]:
+        min_and_max = (self.min_, self.max_)
+        if self.scale == CanvasScaleType.linear:
+            ticks = self._calc_linear_tick(*min_and_max, *(primary_limit, secondary_limit))
         else:
-            ticks = Canvas._calc_log_tick(*min_and_max, *(primary_limit, secondary_limit))
+            ticks = self._calc_log_tick(*min_and_max, *(primary_limit, secondary_limit))
 
-        use_index = Canvas._use_index(canvas_axis.scale, *min_and_max)
-        sd = Canvas._calc_significant_digits(*min_and_max)
+        use_index = self._use_index(*min_and_max)
+        sd = self._calc_significant_digits(*min_and_max)
         format_ = "e" if use_index else "f"
         return [(f"{tick:.{sd}{format_}}", tick) for tick in ticks]
 
@@ -307,43 +235,43 @@ class Canvas(TerminalConvertible):
     def _calc_significant_digits(min_: float, max_: float) -> int:
         return int(math.ceil(log(max_ - min_)))
 
-    @staticmethod
-    def _use_index(scale: CanvasScaleType, min_: float, max_: float) -> bool:
+    def _use_index(self, min_: float, max_: float) -> bool:
         far_from_origin = abs(min_) if abs(min_) > abs(max_) else abs(max_)
         nea_from_origin = abs(min_) if abs(min_) < abs(max_) else abs(max_)
 
-        if scale == CanvasScaleType.linear:
+        if self.scale == CanvasScaleType.linear:
             median_order = log((far_from_origin + nea_from_origin) / 2)
         else:
             median_order = log(math.sqrt(far_from_origin * nea_from_origin))
 
         return median_order > 4 or median_order < -4
 
-    @staticmethod
-    def _quantize(rel_value: float, grid_num: int) -> int:
-        return round(rel_value * (grid_num - 1))
-
-    @staticmethod
-    def _gen_marker_char_dict(marker_group_ids: set[int], chars: list[str]) -> dict[int, str]:
-        char_num = len(chars)
-        if len(marker_group_ids) > char_num:
-            warnings.warn("The number of data series exceeds the number of marker types available. "
-                          "Then, Markers are reused making data identification difficult.", UserWarning)
-
-        char_dict = {}
-        for gid in marker_group_ids:
-            char_dict[gid] = chars[gid % char_num]
-        return char_dict
-
-    @staticmethod
-    def _gen_axis_min_max(label_and_values: list[tuple[str, float]], canvas_axis: CanvasAxis) -> tuple[float, float]:
+    def _gen_axis_min_max(self, label_and_values: list[tuple[str, float]]) -> tuple[float, float]:
         return (
-            min(min(lv[1] for lv in label_and_values), canvas_axis.min_),
-            max(max(lv[1] for lv in label_and_values), canvas_axis.max_),
+            min(min(lv[1] for lv in label_and_values), self.min_),
+            max(max(lv[1] for lv in label_and_values), self.max_),
         )
 
-    def _gen_right_legend(self, marker_char_dict: dict[int, str]) -> tuple[tuple[int, int], terminal.TerminalLegend]:
-        legend_element_strings = [f"{marker_char_dict[le.marker_group_id]}: {le.sequence_name}" for le in self.legend.legend_elements]
+
+@dataclasses.dataclass(frozen=True)
+class CanvasLegendElement:
+    marker_group_id: int
+    sequence_name: str | None
+
+
+class CanvasLegendLoc(str, Enum):
+    none = "none"
+    lower = "lower"
+    right = "right"
+
+
+@dataclasses.dataclass(frozen=True)
+class CanvasLegend:
+    legend_elements: list[CanvasLegendElement]
+    loc: CanvasLegendLoc
+
+    def gen_right_legend(self, marker_char_dict: dict[int, str]) -> tuple[tuple[int, int], terminal.TerminalLegend]:
+        legend_element_strings = [f"{marker_char_dict[le.marker_group_id]}: {le.sequence_name}" for le in self.legend_elements]
         max_legend_size = max(map(len, legend_element_strings))
 
         _terminal_size = shutil.get_terminal_size()
@@ -357,8 +285,8 @@ class Canvas(TerminalConvertible):
 
         return (max_legend_size, 0), terminal.TerminalLegend(legend_labels)
 
-    def _gen_lower_legend(self, marker_char_dict: dict[int, str]) -> tuple[tuple[int, int], terminal.TerminalLegend]:
-        legend_element_strings = [f"{marker_char_dict[le.marker_group_id]}: {le.sequence_name}" for le in self.legend.legend_elements]
+    def gen_lower_legend(self, marker_char_dict: dict[int, str]) -> tuple[tuple[int, int], terminal.TerminalLegend]:
+        legend_element_strings = [f"{marker_char_dict[le.marker_group_id]}: {le.sequence_name}" for le in self.legend_elements]
         max_legend_size = max(map(len, legend_element_strings))
 
         space = 2
@@ -381,3 +309,70 @@ class Canvas(TerminalConvertible):
                 x += len(legend) + space
 
         return (0, legend_line_num), terminal.TerminalLegend(legend_labels)
+
+
+@dataclasses.dataclass(frozen=True)
+class Canvas(TerminalConvertible):
+    markers: list[CanvasMarker]
+    x_axis: CanvasAxis
+    y_axis: CanvasAxis
+    legend: CanvasLegend
+
+    def to_terminal(self, plot_type: Type[terminal.Plottable]) -> terminal.Plottable:
+        # generate marker dict
+        marker_char_dict = self._gen_marker_char_dict(set(marker.marker_group_id for marker in self.markers), plot_type.get_marker_chars())
+
+        # generate legend
+        if self.legend.loc == CanvasLegendLoc.right:
+            legend_offsets, terminal_legend = self.legend.gen_right_legend(marker_char_dict)
+        elif self.legend.loc == CanvasLegendLoc.lower:
+            legend_offsets, terminal_legend = self.legend.gen_lower_legend(marker_char_dict)
+        else:
+            legend_offsets: tuple[int, int] = 0, 0
+            terminal_legend = None
+
+        # generate y axis
+        tick_label_and_values_y = self.y_axis.calc_tick()
+        max_label_size_y = max(len(tick_label_and_value[0]) for tick_label_and_value in tick_label_and_values_y)
+        terminal_size = _TerminalSize(shutil.get_terminal_size(), max_label_size_y, self.y_axis.name is not None, *legend_offsets)
+        terminal_y_axis = self.y_axis.gen_y_axis(tick_label_and_values_y, terminal_size)
+
+        # generate x axis
+        primary, secondary = 18, 8
+        tick_label_and_values_x = self.x_axis.calc_tick()
+        total_label_size_x = sum(len(tick_label_and_value[0]) for tick_label_and_value in tick_label_and_values_x)
+        while total_label_size_x > (terminal_size.columns / 2):
+            primary -= 1
+            secondary -= 1
+            tick_label_and_values_x = self.x_axis.calc_tick(primary, secondary)
+            total_label_size_x = sum(len(tick_label_and_value[0]) for tick_label_and_value in tick_label_and_values_x)
+        terminal_x_axis = self.x_axis.gen_x_axis(tick_label_and_values_x, terminal_size)
+
+        # generate marker
+        terminal_markers = []
+        for marker in self.markers:
+            x = _quantize(marker.x, terminal_size.canvas_columns)
+            y = _quantize(marker.y, terminal_size.canvas_lines)
+            terminal_mark = terminal.TerminalMarker(
+                x=terminal_size.from_canvas_to_terminal_columns(x),
+                y=terminal_size.from_canvas_to_terminal_lines(y),
+                char=marker_char_dict[marker.marker_group_id]
+            )
+            terminal_markers.append(terminal_mark)
+
+        return terminal.Terminal(
+            terminal_size.lines, terminal_size.columns,
+            terminal_markers, terminal_x_axis, terminal_y_axis, terminal_legend
+        )
+
+    @staticmethod
+    def _gen_marker_char_dict(marker_group_ids: set[int], chars: list[str]) -> dict[int, str]:
+        char_num = len(chars)
+        if len(marker_group_ids) > char_num:
+            warnings.warn("The number of data series exceeds the number of marker types available. "
+                          "Then, Markers are reused making data identification difficult.", UserWarning)
+
+        char_dict = {}
+        for gid in marker_group_ids:
+            char_dict[gid] = chars[gid % char_num]
+        return char_dict
