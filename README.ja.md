@@ -13,7 +13,7 @@ pip install scatterminal
 ## 使い方
 このツールには以下の２種類のデータソースを利用できます
 ### 1. CSV ファイル
-ターミナル上で次のようにコマンドを実行すると散布図が描画されます。
+ターミナル上で次のようにコマンドを実行するとcsvファイル（あるいはtsvファイル）を読み込んで散布図が描画されます。
 ```shell
 plot tests/samples/single_column.csv
 ```

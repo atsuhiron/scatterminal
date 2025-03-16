@@ -14,7 +14,7 @@ After installation, the `plot` command will become available.
 This tool supports the following two types of data sources:
 
 ### 1. CSV files
-By executing the following command in the terminal, a scatter plot will be generated:
+The following command on the terminal will read a csv file (or tsv file) and plot a scatter plot.
 ```shell
 plot tests/samples/single_column.csv
 ```
