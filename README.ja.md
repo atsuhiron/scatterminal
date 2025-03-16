@@ -1,20 +1,19 @@
 # scatterminal
-Draw scatter plot on terminal
+ターミナル上に散布図を描画します
 
-## Requirement
+## 必要要件
 - Python >= 3.10
 
-## Installation
+## インストール
 ```shell
 pip install scatterminal
 ```
-After installation, the `plot` command will become available.
+このとき、`plot` というコマンドが利用できるようになります。
 
-## Usage
-This tool supports the following two types of data sources:
-
-### 1. CSV files
-By executing the following command in the terminal, a scatter plot will be generated:
+## 使い方
+このツールには以下の２種類のデータソースを利用できます
+### 1. CSV ファイル
+ターミナル上で次のようにコマンドを実行すると散布図が描画されます。
 ```shell
 plot tests/samples/single_column.csv
 ```
@@ -37,16 +36,15 @@ e 6.000 +        *                  *
 
 *: value
 ```
-Primarily, this type is designed for use in the terminal.  
-However, it can also be executed within a Python script, yielding the same result:
+
+主にターミナル上での利用を想定していますが、Python スクリプト内でも実行でき、同じ結果を得られます。
 ```python
 from scatterminal.plot import plot_csv
 
 plot_csv(["tests/samples/single_column.csv"])
 ```
-
-### 2. `list` objects of Python
-This method is only available within Python scripts.
+### 2. Python の `list` オブジェクト
+こちらは Python スクリプトでのみ利用可能です。
 
 ```python
 from scatterminal.plot import plot_inline
@@ -82,11 +80,11 @@ plot_inline(
 *: y1  o: y2
 ```
 
-## Detailed specifications
-### Data sequences
-#### Basic format
-The following is an example of the most basic file format that can be plotted.
-Each column represents the x-axis and y-axis coordinates of a single data sequence.
+## 細かな仕様
+### データ系列
+#### 基本形式
+描画できるファイル形式の内、最も基本的な形式が次の例です。
+それぞれの列はある一つのデータ系列のx軸座標、y軸座標を表します。
 ```csv:test/samples/double_column.csv
 x,y
 0.0000,0.0000
@@ -102,8 +100,8 @@ x,y
 6.2832,-0.0000
 6.9115,0.5878
 ```
-#### Simplified format
-If there is a single column, the x-axis coordinates are interpreted as omitted.
+#### 省略された形式
+列が１本の場合はx軸座標が省略されたものと解釈されます。
 ```csv:tests/samples/single_column.csv
 value
 5.5
@@ -125,8 +123,7 @@ value
 8.4
 7.0
 ```
-The omitted x-axis coordinates are implicitly compensated by a sequence of integers beginning with zero.  
-Thus, the above example is equivalent to the following two-column format.
+省略された x軸座標は暗黙的に0始まりの整数列で補われます。従って上の例は次の２列の形式と等価です。
 ```csv
 ,value
 0,5.5
@@ -148,9 +145,8 @@ Thus, the above example is equivalent to the following two-column format.
 16,8.4
 17,7.0
 ```
-#### Multiple data sequences
-When drawing multiple data sequences, multiple files are loaded at the same time.  
-In the following example, you will need the coordinates of each of the two sequences (i.e., `x1`, `y1`, `x2`, and `y2`).
+#### 複数のデータ系列
+複数のデータ系列を描画する場合は複数のファイルを同時に読み込みます。以下の例では、2つの系列の各座標（つまり、`x1`、`y1`、`x2`及び`y2`）が必要になります。
 ```shell
 plot tests/samples/single_column.csv tests/samples/single_column_seq2.csv
 ```
@@ -173,8 +169,7 @@ plot tests/samples/single_column.csv tests/samples/single_column_seq2.csv
 
 *: value  o: value2
 ```
-Sometimes, however, multiple data sequences share a single x-axis coordinate.  
-In this case, it is possible to combine the files into one, with each column representing `x`, `y1`, and `y2`.
+しかし、時には複数のデータ系列が1つのx軸座標を共有する場合があります。この場合はファイルを1つにまとめることが可能で、各列は `x`、`y1`、`y2` を表します。
 ```csv:tests/samples/triple_column.csv
 x,sin,cos
 0.0000,0.0000,1.0000
@@ -190,7 +185,7 @@ x,sin,cos
 6.2832,-0.0000,1.0000
 6.9115,0.5878,0.8090
 ```
-This is plotted as follows.
+これを描画すると次のようになります。
 ```shell
 plot tests/samples/triple_column.csv
 ```
@@ -214,8 +209,8 @@ plot tests/samples/triple_column.csv
 *: sin  o: cos
 ```
 
-### Logarithm
-The `--yscale log` option will give you a logarithmic display.
+### 対数
+`--yscale log` のオプションを使用すれば対数表示になります。
 ```shell
 plot tests/samples/double_column_power.csv tests/samples/double_column_power_seq2.csv --yscale log
 ```
