@@ -119,22 +119,18 @@ class Data(CanvasConvertible):
         else:
             x_min = self.x_axis.min_
             x_max = self.x_axis.max_
+        
+        edge_space_ratio = 0.1
 
         if is_x_range_undef:
             if self.x_axis.scale == DataScaleType.linear:
-                white_delta = (x_max - x_min) * 0.08
+                white_delta = (x_max - x_min) * edge_space_ratio
                 canvas_x_range = (x_min - white_delta, x_max + white_delta)
             else:
-                white_delta_ratio = log(x_max/x_min) * 0.08
+                white_delta_ratio = log(x_max/x_min) * edge_space_ratio
                 canvas_x_range = (x_min / white_delta_ratio, x_max * white_delta_ratio)
         else:
             canvas_x_range = (self.x_axis.min_, self.x_axis.max_)
-
-        if self.x_axis.scale == DataScaleType.log:
-            x_min = log(x_min)
-            x_max = log(x_max)
-
-        x_range = x_max - x_min
 
         is_y_range_undef = self.y_axis.min_ is None
         if is_y_range_undef:
@@ -146,19 +142,13 @@ class Data(CanvasConvertible):
 
         if is_y_range_undef:
             if self.y_axis.scale == DataScaleType.linear:
-                white_delta = (y_max - y_min) * 0.08
+                white_delta = (y_max - y_min) * edge_space_ratio
                 canvas_y_range = (y_min - white_delta, y_max + white_delta)
             else:
-                white_delta_ratio = (log(y_max/y_min) * 0.08) + 1
+                white_delta_ratio = (log(y_max/y_min) * edge_space_ratio) + 1
                 canvas_y_range = (y_min / white_delta_ratio, y_max * white_delta_ratio)
         else:
             canvas_y_range = (self.y_axis.min_, self.y_axis.max_)
-
-        if self.y_axis.scale == DataScaleType.log:
-            y_min = log(y_min)
-            y_max = log(y_max)
-
-        y_range = y_max - y_min
 
         canvas_markers = []
         canvas_legend_elements = []
@@ -170,8 +160,16 @@ class Data(CanvasConvertible):
             for x, y in zip(seq.x, seq.y):
                 canvas_markers.append(
                     canvas.CanvasMarker(
-                        abs_to_rel(x_process_func(x), x_range, x_min),
-                        abs_to_rel(y_process_func(y), y_range, y_min),
+                        abs_to_rel(
+                            x_process_func(x),
+                            x_process_func(canvas_x_range[1]) - x_process_func(canvas_x_range[0]),
+                            x_process_func(canvas_x_range[0])
+                        ),
+                        abs_to_rel(
+                            y_process_func(y),
+                            y_process_func(canvas_y_range[1]) - y_process_func(canvas_y_range[0]),
+                            y_process_func(canvas_y_range[0])
+                        ),
                         seq.seq_id
                     )
                 )

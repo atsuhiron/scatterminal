@@ -233,7 +233,15 @@ class CanvasAxis:
 
     @staticmethod
     def _calc_significant_digits(min_: float, max_: float) -> int:
-        return int(math.ceil(log(max_ - min_)))
+        delta = max_ - min_
+        inv_med = 2/(abs(min_) + abs(max_))
+
+        raw_digit = log(delta * inv_med) + 2
+        if raw_digit < 1:
+            return 1
+        if raw_digit > 6:
+            return 6
+        return int(math.ceil(raw_digit))
 
     def _use_index(self, min_: float, max_: float) -> bool:
         far_from_origin = abs(min_) if abs(min_) > abs(max_) else abs(max_)

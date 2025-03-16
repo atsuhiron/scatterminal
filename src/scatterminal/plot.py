@@ -126,4 +126,4 @@ def main():
 
 
 if __name__ == "__main__":
-    plot_csv(["../../tests/samples/double_column.csv"])
+    plot_csv(["../../tests/samples/large_value.csv"])
