@@ -94,7 +94,7 @@ class CanvasAxis:
             terminal_size: _TerminalSize
     ) -> terminal.TerminalYAxis:
         min_and_max = self._gen_axis_min_max(label_and_values)
-        axis_label_offset = int(terminal_size.has_y_axis_label)
+        axis_label_offset = int(terminal_size.has_y_axis_label) * 2
 
         tick_labels = []
         tick_grid_set = set()

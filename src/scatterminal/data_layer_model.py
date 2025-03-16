@@ -17,6 +17,16 @@ class CanvasConvertible(metaclass=abc.ABCMeta):
 
 
 @dataclasses.dataclass(frozen=True)
+class SimpleDataSequence:
+    x: list[int | float]
+    y: list[int | float]
+    name: str | None = None
+
+    def to_data_sequence(self, seq_id: int) -> DataSequence:
+        return DataSequence(self.x, self.y, seq_id, self.name)
+
+
+@dataclasses.dataclass(frozen=True)
 class DataSequence:
     x: list[int | float]
     y: list[int | float]

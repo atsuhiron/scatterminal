@@ -4,7 +4,7 @@ import dataclasses
 
 from scatterminal.canvas_layer_model import Canvas
 from scatterminal.csv_parser import read_file, parse
-from scatterminal.data_layer_model import DataScaleType, DataAxis, Data, DataLegendLoc
+from scatterminal.data_layer_model import DataScaleType, DataAxis, Data, DataLegendLoc, DataSequence, SimpleDataSequence
 from scatterminal.terminal_layer_model import Terminal
 
 
@@ -35,7 +35,31 @@ def plot_csv(
             str_cells = read_file(f, file_path.split(".")[-1], sep)
         data_sequences.extend(parse(str_cells, next_id))
         next_id = len(data_sequences)
+    _plot(data_sequences, x_label, y_label, x_scale, y_scale, x_lim, y_lim, legend_loc)
 
+
+def plot_inline(
+        data_sequences: list[SimpleDataSequence],
+        x_label: str | None = None,
+        y_label: str | None = None,
+        x_scale: str = "linear",
+        y_scale: str = "linear",
+        x_lim: tuple[float, float] | None = None,
+        y_lim: tuple[float, float] | None = None,
+        legend_loc: str = "lower"):
+    identified_data_sequences = [data_sequences[i].to_data_sequence(i) for i in range(len(data_sequences))]
+    _plot(identified_data_sequences, x_label, y_label, x_scale, y_scale, x_lim, y_lim, legend_loc)
+
+
+def _plot(
+        data_sequences: list[DataSequence],
+        x_label: str | None = None,
+        y_label: str | None = None,
+        x_scale: str = "linear",
+        y_scale: str = "linear",
+        x_lim: tuple[float, float] | None = None,
+        y_lim: tuple[float, float] | None = None,
+        legend_loc: str = "lower"):
     if x_label is None:
         x_labels = set(seq.x_name for seq in data_sequences)
         if len(x_labels) == 1:
@@ -123,7 +147,3 @@ def main():
         y_lim=argv.ylim,
         legend_loc=argv.legend_loc
     )
-
-
-if __name__ == "__main__":
-    plot_csv(["../../tests/samples/large_value.csv"])
